@@ -1,0 +1,142 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useParams, useNavigate } from 'react-router-dom'; // Importa useParams y useNavigate
+
+function TaskForm() {
+    const { id } = useParams(); // Obtiene el parámetro 'id' de la URL (si existe)
+    const navigate = useNavigate(); // Para redirigir
+    const isEditMode = !!id; // True si id existe, false si no
+    const apiUrl = 'http://localhost/api/tasks'; // Asegúrate de esta URL
+
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [dueDate, setDueDate] = useState('');
+    const [status, setStatus] = useState('pending');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    // useEffect para cargar los datos de la tarea si estamos en modo edición
+    useEffect(() => {
+        if (isEditMode) {
+            setLoading(true);
+            axios.get(`${apiUrl}/${id}`)
+                .then(response => {
+                    const task = response.data;
+                    setTitle(task.title);
+                    setDescription(task.description || ''); // Asegura que no sea null
+                    setDueDate(task.due_date ? task.due_date.split('T')[0] : ''); // Formato 'YYYY-MM-DD'
+                    setStatus(task.status);
+                    setLoading(false);
+                })
+                .catch(err => {
+                    console.error('Error al cargar la tarea para edición:', err);
+                    setError('No se pudo cargar la tarea para edición.');
+                    setLoading(false);
+                });
+        } else {
+            // Limpia el formulario si no estamos en modo edición (ej. al navegar de / a /tasks/create)
+            setTitle('');
+            setDescription('');
+            setDueDate('');
+            setStatus('pending');
+        }
+    }, [id, isEditMode]); // Vuelve a ejecutar si el ID o el modo cambian
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError(null); // Limpiar errores previos
+
+        const taskData = {
+            title,
+            description,
+            due_date: dueDate || null, // Envía null si está vacío
+            status,
+        };
+
+        try {
+            if (isEditMode) {
+                // Modo edición: Petición PUT
+                await axios.put(`${apiUrl}/${id}`, taskData);
+                alert('Tarea actualizada con éxito!');
+            } else {
+                // Modo creación: Petición POST
+                await axios.post(apiUrl, taskData);
+                alert('Tarea creada con éxito!');
+            }
+            navigate('/'); // Redirige a la lista de tareas después de guardar/actualizar
+        } catch (err) {
+            console.error(`${isEditMode ? 'Error al actualizar' : 'Error al crear'} la tarea:`, err);
+            setError(`${isEditMode ? 'No se pudo actualizar' : 'No se pudo crear'} la tarea: ${err.response?.data?.message || err.message}`);
+        }
+    };
+
+    if (loading && isEditMode) return <p className="text-center text-gray-400">Cargando datos de la tarea...</p>;
+    if (error) return <p className="text-center text-red-500">{error}</p>;
+
+    return (
+        <form onSubmit={handleSubmit} className="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">
+            <h2 className="text-2xl font-semibold mb-4 text-center text-white">
+                {isEditMode ? 'Editar Tarea' : 'Añadir Nueva Tarea'}
+            </h2>
+            <div className="mb-4">
+                <label htmlFor="title" className="block text-gray-400 text-sm font-bold mb-2">Título:</label>
+                <input
+                    type="text"
+                    id="title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 placeholder-gray-400 text-white"
+                    required
+                />
+            </div>
+            <div className="mb-4">
+                <label htmlFor="description" className="block text-gray-400 text-sm font-bold mb-2">Descripción:</label>
+                <textarea
+                    id="description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 placeholder-gray-400 text-white"
+                ></textarea>
+            </div>
+            <div className="mb-4">
+                <label htmlFor="dueDate" className="block text-gray-400 text-sm font-bold mb-2">Fecha de Vencimiento:</label>
+                <input
+                    type="date"
+                    id="dueDate"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 placeholder-gray-400 text-white"
+                />
+            </div>
+            <div className="mb-6">
+                <label htmlFor="status" className="block text-gray-400 text-sm font-bold mb-2">Estado:</label>
+                <select
+                    id="status"
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
+                >
+                    <option value="pending">Pendiente</option>
+                    <option value="completed">Completada</option>
+                </select>
+            </div>
+            <div className="flex justify-between">
+                <button
+                    type="submit"
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-5/12"
+                >
+                    {isEditMode ? 'Actualizar Tarea' : 'Guardar Tarea'}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => navigate('/')} // Volver a la lista de tareas
+                    className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-5/12"
+                >
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    );
+}
+
+export default TaskForm;
