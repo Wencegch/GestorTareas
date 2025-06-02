@@ -1,25 +1,34 @@
-// src/App.jsx
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext.jsx';
-import TaskList from './TaskList';
-import TaskForm from './TaskForm';
-import LoginForm from './LoginForm';
-import RegisterForm from './RegisterForm';
+import TaskList from './views/TaskList.jsx';
+import TaskForm from './views/TaskForm.jsx';
+import LoginForm from './views/LoginForm.jsx';
+import RegisterForm from './views/RegisterForm.jsx';
 
-// Componente para la navegación (opcional, para mantener el código más limpio)
-// Este componente ya usa useAuth(), y está dentro de AuthProvider en el render
+// Componente para la navegación
 const AuthNav = () => {
-    const { user, logout, loading } = useAuth(); // Asegúrate de usar loading también aquí
+    const { user, logout, loading } = useAuth();
+    const location = useLocation(); // Hook para obtener la ruta actual
 
     if (loading) {
         return null; // O un spinner si prefieres que la navegación se oculte/muestre algo durante la carga
     }
 
     return (
-        <div className="flex justify-between items-center w-full max-w-2xl px-4 mb-4">
-            <Link to="/" className="text-blue-400 hover:text-blue-300 font-bold">Mis Tareas</Link>
+        <div className="flex justify-between items-center w-full px-4 mb-4">
             {user ? (
+                // Si el usuario está logueado, muestra "Mis Tareas" a la izquierda
+                <Link to="/" className="text-blue-400 hover:text-blue-300 font-bold">Mis Tareas</Link>
+            ) : (
+                // Si el usuario NO está logueado, no muestra "Mis Tareas" aquí.
+                // Podrías poner un título o un logo de la aplicación si lo deseas,
+                // o un span vacío para mantener el espacio y la alineación.
+                <span className="text-xl font-bold text-white"></span>
+            )}
+
+            {user ? (
+                // Si el usuario está logueado: Saludo y botón de Cerrar Sesión a la derecha
                 <div className="flex items-center space-x-4">
                     <span className="text-gray-300">Hola, {user.name}</span>
                     <button
@@ -30,13 +39,20 @@ const AuthNav = () => {
                     </button>
                 </div>
             ) : (
+                // Si el usuario NO está logueado:
+                // Mostrar botones de autenticación en la cabecera solo si NO estamos en las rutas de login/register.
+                // En login/register, los enlaces/botones irán dentro o cerca del formulario.
                 <div className="space-x-4">
-                    <Link to="/login" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
-                        Iniciar Sesión
-                    </Link>
-                    <Link to="/register" className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
-                        Registrarse
-                    </Link>
+                    {location.pathname !== '/login' && location.pathname !== '/register' && (
+                        <>
+                            <Link to="/login" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
+                                Iniciar Sesión
+                            </Link>
+                            <Link to="/register" className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
+                                Registrarse
+                            </Link>
+                        </>
+                    )}
                 </div>
             )}
         </div>
@@ -60,13 +76,13 @@ const PrivateRoute = ({ children }) => {
 
 // Nuevo componente para el contenido principal de la aplicación que usa AuthContext
 const AppContent = () => {
-    const { user, loading } = useAuth(); // Ahora useAuth() se llama DENTRO del AuthProvider
+    const { user, loading } = useAuth();
 
     return (
         <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center py-10">
             <header className="mb-8 text-center w-full">
                 <h1 className="text-5xl font-bold mb-4">Gestor de Tareas</h1>
-                <AuthNav /> {/* AuthNav también está dentro del AuthProvider */}
+                <AuthNav /> {/* AuthNav se encarga de la lógica de navegación */}
                 <div className="text-center mt-4">
                     {/* Condicional para mostrar el botón "Añadir Nueva Tarea" */}
                     {!loading && user && (
@@ -115,7 +131,7 @@ function App() {
     return (
         <Router>
             <AuthProvider>
-                <AppContent /> {/* Envuelve el contenido principal con AppContent */}
+                <AppContent />
             </AuthProvider>
         </Router>
     );
