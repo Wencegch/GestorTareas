@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useParams, useNavigate } from 'react-router-dom'; // Importa useParams y useNavigate
+import { useParams, useNavigate } from 'react-router-dom';
+import apiClient from '../api';
 
 function TaskForm() {
-    const { id } = useParams(); // Obtiene el parámetro 'id' de la URL (si existe)
-    const navigate = useNavigate(); // Para redirigir
-    const isEditMode = !!id; // True si id existe, false si no
-    const apiUrl = 'http://localhost/api/tasks'; // Asegúrate de esta URL
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const isEditMode = !!id;
+    // Asegúrate de que esta URL base sea correcta, puede ser 'http://localhost:8000/api/tasks'
+    // dependiendo de cómo tienes configurado el servidor de desarrollo de React y el de Laravel.
+    // Si tu Vite proxy está configurado para /api, entonces '/api/tasks' podría ser suficiente.
+    const apiUrl = 'http://localhost/api/tasks'; // Esta es la URL base para la colección de tareas
 
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -15,16 +18,16 @@ function TaskForm() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // useEffect para cargar los datos de la tarea si estamos en modo edición
     useEffect(() => {
         if (isEditMode) {
             setLoading(true);
-            axios.get(`${apiUrl}/${id}`)
+            // CORRECCIÓN AQUÍ: Usar plantillas de cadena de JavaScript correctamente
+            apiClient.get(`${apiUrl}/${id}`) // <-- ¡CORREGIDO!
                 .then(response => {
                     const task = response.data;
                     setTitle(task.title);
-                    setDescription(task.description || ''); // Asegura que no sea null
-                    setDueDate(task.due_date ? task.due_date.split('T')[0] : ''); // Formato 'YYYY-MM-DD'
+                    setDescription(task.description || '');
+                    setDueDate(task.due_date ? task.due_date.split('T')[0] : '');
                     setStatus(task.status);
                     setLoading(false);
                 })
@@ -34,36 +37,33 @@ function TaskForm() {
                     setLoading(false);
                 });
         } else {
-            // Limpia el formulario si no estamos en modo edición (ej. al navegar de / a /tasks/create)
             setTitle('');
             setDescription('');
             setDueDate('');
             setStatus('pending');
         }
-    }, [id, isEditMode]); // Vuelve a ejecutar si el ID o el modo cambian
+    }, [id, isEditMode, apiUrl]); // Agregamos 'apiUrl' a las dependencias por buena práctica
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError(null); // Limpiar errores previos
+        setError(null);
 
         const taskData = {
             title,
             description,
-            due_date: dueDate || null, // Envía null si está vacío
+            due_date: dueDate || null,
             status,
         };
-
         try {
             if (isEditMode) {
-                // Modo edición: Petición PUT
-                await axios.put(`${apiUrl}/${id}`, taskData);
+                // CORRECCIÓN AQUÍ: Usar plantillas de cadena de JavaScript correctamente
+                await apiClient.put(`${apiUrl}/${id}`, taskData); // <-- ¡CORREGIDO!
                 alert('Tarea actualizada con éxito!');
             } else {
-                // Modo creación: Petición POST
-                await axios.post(apiUrl, taskData);
+                await apiClient.post(apiUrl, taskData);
                 alert('Tarea creada con éxito!');
             }
-            navigate('/'); // Redirige a la lista de tareas después de guardar/actualizar
+            navigate('/');
         } catch (err) {
             console.error(`${isEditMode ? 'Error al actualizar' : 'Error al crear'} la tarea:`, err);
             setError(`${isEditMode ? 'No se pudo actualizar' : 'No se pudo crear'} la tarea: ${err.response?.data?.message || err.message}`);
@@ -85,7 +85,7 @@ function TaskForm() {
                     id="title"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 placeholder-gray-400 text-white"
+                    className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 placeholder-gray-400 text-white"
                     required
                 />
             </div>
@@ -95,7 +95,7 @@ function TaskForm() {
                     id="description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 placeholder-gray-400 text-white"
+                    className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 placeholder-gray-400 text-white"
                 ></textarea>
             </div>
             <div className="mb-4">
@@ -105,7 +105,7 @@ function TaskForm() {
                     id="dueDate"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 placeholder-gray-400 text-white"
+                    className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 placeholder-gray-400 text-white"
                 />
             </div>
             <div className="mb-6">
@@ -114,7 +114,7 @@ function TaskForm() {
                     id="status"
                     value={status}
                     onChange={(e) => setStatus(e.target.value)}
-                    className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
+                    className="shadow border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
                 >
                     <option value="pending">Pendiente</option>
                     <option value="completed">Completada</option>
@@ -129,7 +129,7 @@ function TaskForm() {
                 </button>
                 <button
                     type="button"
-                    onClick={() => navigate('/')} // Volver a la lista de tareas
+                    onClick={() => navigate('/')}
                     className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-5/12"
                 >
                     Cancelar

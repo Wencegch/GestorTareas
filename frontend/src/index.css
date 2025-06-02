@@ -1,7 +1,4 @@
-/* src/index.css */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 /* AÑADE ESTO para resetear el body y html */
 html, body, #root {

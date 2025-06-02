@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Link } from 'react-router-dom'; // Asegúrate de que Link está importado
+import { Link } from 'react-router-dom';
+import apiClient from '../api';
 
 function TaskList() {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const apiUrl = 'http://localhost/api/tasks'; // Asegúrate de esta URL
+    const apiUrl = 'http://localhost/api/tasks';
 
     const fetchTasks = async () => {
         try {
             setLoading(true);
             setError(null);
-            const response = await axios.get(apiUrl);
+            const response = await apiClient.get(apiUrl); // Cambiado a apiClient.get [cite: 27, 32]
             setTasks(response.data);
         } catch (err) {
             console.error('Error al cargar las tareas:', err);
@@ -23,18 +23,17 @@ function TaskList() {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
-            try {
-                await axios.delete(`${apiUrl}/${id}`);
-                setTasks(tasks.filter(task => task.id !== id));
-                console.log('Tarea eliminada con éxito');
-            } catch (err) {
-                console.error('Error al eliminar la tarea:', err);
-                alert(`Error al eliminar la tarea: ${err.response?.data?.message || err.message}`);
-                setError(err);
-            }
+    if (window.confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
+        try {
+            await apiClient.delete(`${apiUrl}/${id}`);
+            setTasks(tasks.filter(task => task.id !== id));
+            console.log('Tarea eliminada con éxito');
+        } catch (err) {
+            console.error('Error al eliminar la tarea:', err);
+            alert(`Error al eliminar la tarea: ${err.response?.data?.message || err.message}`);
         }
-    };
+    }
+};
 
     useEffect(() => {
         fetchTasks();
@@ -51,9 +50,7 @@ function TaskList() {
     return (
         <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
             <h2 className="text-2xl font-semibold mb-4 text-center text-white">Mis Tareas</h2>
-
             {tasks.length === 0 ? (
-                // ¡MODIFICACIÓN AQUÍ!
                 <p className="text-center text-gray-400">
                     No hay tareas disponibles. ¡
                     <Link to="/tasks/create" className="text-blue-400 hover:text-blue-300 font-bold underline">
