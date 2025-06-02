@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useParams, useNavigate } from 'react-router-dom'; // Importa useParams y useNavigate
+import { useParams, useNavigate } from 'react-router-dom';
+import apiClient from './api';
 
 function TaskForm() {
-    const { id } = useParams(); // Obtiene el parámetro 'id' de la URL (si existe)
-    const navigate = useNavigate(); // Para redirigir
-    const isEditMode = !!id; // True si id existe, false si no
-    const apiUrl = 'http://localhost/api/tasks'; // Asegúrate de esta URL
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const isEditMode = !!id;
+    const apiUrl = 'http://localhost/api/tasks';
 
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -15,16 +15,15 @@ function TaskForm() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // useEffect para cargar los datos de la tarea si estamos en modo edición
     useEffect(() => {
         if (isEditMode) {
             setLoading(true);
-            axios.get(`${apiUrl}/${id}`)
+            apiClient.get(`<span class="math-inline">\{apiUrl\}/</span>{id}`) // Cambiado a apiClient.get [cite: 27, 32]
                 .then(response => {
                     const task = response.data;
                     setTitle(task.title);
-                    setDescription(task.description || ''); // Asegura que no sea null
-                    setDueDate(task.due_date ? task.due_date.split('T')[0] : ''); // Formato 'YYYY-MM-DD'
+                    setDescription(task.description || '');
+                    setDueDate(task.due_date ? task.due_date.split('T')[0] : '');
                     setStatus(task.status);
                     setLoading(false);
                 })
@@ -34,36 +33,32 @@ function TaskForm() {
                     setLoading(false);
                 });
         } else {
-            // Limpia el formulario si no estamos en modo edición (ej. al navegar de / a /tasks/create)
             setTitle('');
             setDescription('');
             setDueDate('');
             setStatus('pending');
         }
-    }, [id, isEditMode]); // Vuelve a ejecutar si el ID o el modo cambian
+    }, [id, isEditMode]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError(null); // Limpiar errores previos
+        setError(null);
 
         const taskData = {
             title,
             description,
-            due_date: dueDate || null, // Envía null si está vacío
+            due_date: dueDate || null,
             status,
         };
-
         try {
             if (isEditMode) {
-                // Modo edición: Petición PUT
-                await axios.put(`${apiUrl}/${id}`, taskData);
+                await apiClient.put(`<span class="math-inline">\{apiUrl\}/</span>{id}`, taskData); // Cambiado a apiClient.put [cite: 27, 32]
                 alert('Tarea actualizada con éxito!');
             } else {
-                // Modo creación: Petición POST
-                await axios.post(apiUrl, taskData);
+                await apiClient.post(apiUrl, taskData); // Cambiado a apiClient.post [cite: 27, 32]
                 alert('Tarea creada con éxito!');
             }
-            navigate('/'); // Redirige a la lista de tareas después de guardar/actualizar
+            navigate('/');
         } catch (err) {
             console.error(`${isEditMode ? 'Error al actualizar' : 'Error al crear'} la tarea:`, err);
             setError(`${isEditMode ? 'No se pudo actualizar' : 'No se pudo crear'} la tarea: ${err.response?.data?.message || err.message}`);
@@ -129,7 +124,7 @@ function TaskForm() {
                 </button>
                 <button
                     type="button"
-                    onClick={() => navigate('/')} // Volver a la lista de tareas
+                    onClick={() => navigate('/')}
                     className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-5/12"
                 >
                     Cancelar

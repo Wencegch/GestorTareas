@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Link } from 'react-router-dom'; // Asegúrate de que Link está importado
+import { Link } from 'react-router-dom';
+import apiClient from './api';
 
 function TaskList() {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const apiUrl = 'http://localhost/api/tasks'; // Asegúrate de esta URL
+    const apiUrl = 'http://localhost/api/tasks';
 
     const fetchTasks = async () => {
         try {
             setLoading(true);
             setError(null);
-            const response = await axios.get(apiUrl);
+            const response = await apiClient.get(apiUrl); // Cambiado a apiClient.get [cite: 27, 32]
             setTasks(response.data);
         } catch (err) {
             console.error('Error al cargar las tareas:', err);
@@ -25,7 +25,7 @@ function TaskList() {
     const handleDelete = async (id) => {
         if (window.confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
             try {
-                await axios.delete(`${apiUrl}/${id}`);
+                await apiClient.delete(`<span class="math-inline">\{apiUrl\}/</span>{id}`); // Cambiado a apiClient.delete [cite: 27, 32]
                 setTasks(tasks.filter(task => task.id !== id));
                 console.log('Tarea eliminada con éxito');
             } catch (err) {
@@ -51,9 +51,7 @@ function TaskList() {
     return (
         <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
             <h2 className="text-2xl font-semibold mb-4 text-center text-white">Mis Tareas</h2>
-
             {tasks.length === 0 ? (
-                // ¡MODIFICACIÓN AQUÍ!
                 <p className="text-center text-gray-400">
                     No hay tareas disponibles. ¡
                     <Link to="/tasks/create" className="text-blue-400 hover:text-blue-300 font-bold underline">

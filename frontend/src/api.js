@@ -1,34 +1,37 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-    baseURL: 'http://localhost/api',
-    withCredentials: true, // Esto es importante para que Laravel Sanctum maneje las cookies CSRF
+    baseURL: 'http://localhost/api', // La URL de tu API Laravel
+    withCredentials: false, //En false porque no dependemos de cookies de sesión para la autenticación.
+    headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+    },
 });
 
-// Interceptor para añadir el token a cada petición saliente
-apiClient.interceptors.request.use(config => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+// Interceptor de solicitud: Añade el token Bearer a cada petición saliente.
+apiClient.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('authToken'); // Obtiene el token de localStorage
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`; // Establece el encabezado Authorization
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
     }
-    return config;
-}, error => {
-    return Promise.reject(error);
-});
+);
 
-// Interceptor para manejar errores 401 (No autorizado) globalmente
+// Interceptor de respuesta (opcional pero recomendado para manejar errores de autenticación globalmente)
 apiClient.interceptors.response.use(
     response => response,
-    async error => {
+    error => {
+        // Si el token es inválido o expirado (401 Unauthorized), puedes limpiar el token y redirigir.
         if (error.response && error.response.status === 401) {
-            // Puedes forzar un logout si el token es inválido/expiró
-            // Esto es una simplificación, en producción manejarías refresco de tokens, etc.
-            if (localStorage.getItem('authToken')) {
-                console.warn('Token expirado o inválido. Cerrando sesión automáticamente.');
-                localStorage.removeItem('authToken');
-                // Puedes disparar un evento o usar un Context para actualizar el estado global de auth
-                // window.location.href = '/login'; // O una navegación más suave
-            }
+            localStorage.removeItem('authToken');
+            // Aquí podrías, por ejemplo, redirigir al usuario a la página de login
+            // window.location.href = '/login';
         }
         return Promise.reject(error);
     }

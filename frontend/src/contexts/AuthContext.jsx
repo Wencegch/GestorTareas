@@ -1,31 +1,37 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import apiClient from '../api'; // Usaremos esta instancia de axios configurada
+import apiClient from '../api'; // Asegúrate de que este es tu apiClient configurado
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [token, setToken] = useState(localStorage.getItem('authToken')); // Leer token al inicio
+    const [token, setToken] = useState(localStorage.getItem('authToken'));
     const [loading, setLoading] = useState(true);
 
-    // Configurar el token en la instancia de axios al cargar o cambiar el token
+    // Efecto para inicializar el token en Axios cuando la aplicación carga
+    // o cuando el token cambia (ej. al cerrar sesión)
     useEffect(() => {
         if (token) {
+            // Establece el token en las cabeceras por defecto de Axios
+            // Esto asegura que fetchUser y cualquier otra petición use este token
             apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            fetchUser(); // Intentar obtener el usuario si hay un token
+            fetchUser();
         } else {
+            // Limpiar el token de las cabeceras si no hay token
             delete apiClient.defaults.headers.common['Authorization'];
+            setUser(null);
             setLoading(false);
         }
-    }, [token]);
+    }, [token]); // Dependencia del token
 
     const fetchUser = async () => {
         try {
+            setLoading(true);
             const response = await apiClient.get('/user');
             setUser(response.data);
         } catch (error) {
-            console.error('Error al obtener el usuario:', error);
-            setUser(null); // Si el token es inválido o expiró
+            console.error('Error al obtener el usuario con token:', error);
+            setUser(null);
             setToken(null);
             localStorage.removeItem('authToken');
         } finally {
@@ -37,22 +43,37 @@ export const AuthProvider = ({ children }) => {
         try {
             const response = await apiClient.post('/login', credentials);
             const newToken = response.data.token;
-            setToken(newToken);
-            localStorage.setItem('authToken', newToken);
-            await fetchUser(); // Obtener el usuario después de un login exitoso
+            setToken(newToken); // Actualiza el estado del token
+            localStorage.setItem('authToken', newToken); // Guarda en localStorage
+
+            // *** ESTO ES CLAVE PARA LA CONDICIÓN DE CARRERA ***
+            // Establece el token directamente en las cabeceras por defecto de Axios
+            // para que la siguiente llamada (fetchUser o a /tasks) lo use inmediatamente.
+            apiClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+
+            // La llamada a fetchUser() ahora debería usar el token recién establecido.
+            await fetchUser();
             return true;
         } catch (error) {
             console.error('Error de inicio de sesión:', error.response?.data || error.message);
-            throw error; // Re-lanza el error para que el componente de login lo maneje
+            throw error;
         }
     };
 
     const register = async (userData) => {
         try {
-            await apiClient.post('/register', userData);
-            // Después del registro, puedes optar por loguearlo automáticamente
-            // o redirigirlo a la página de login
-            // await login({ email: userData.email, password: userData.password });
+            const response = await apiClient.post('/register', userData);
+            if (response.data.token) {
+                const newToken = response.data.token;
+                setToken(newToken);
+                localStorage.setItem('authToken', newToken);
+                apiClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`; // También para el registro
+                await fetchUser();
+            } else {
+                // Si el registro no devuelve token, pero esperas auto-login,
+                // deberías llamar a `login` después del registro
+                await login({ email: userData.email, password: userData.password });
+            }
             return true;
         } catch (error) {
             console.error('Error de registro:', error.response?.data || error.message);
@@ -62,13 +83,14 @@ export const AuthProvider = ({ children }) => {
 
     const logout = async () => {
         try {
-            await apiClient.post('/logout'); // Avisar a Laravel para invalidar el token
+            await apiClient.post('/logout');
         } catch (error) {
             console.error('Error al cerrar sesión:', error);
         } finally {
             setToken(null);
             setUser(null);
             localStorage.removeItem('authToken');
+            // Asegurarse de limpiar el token de las cabeceras de Axios al cerrar sesión
             delete apiClient.defaults.headers.common['Authorization'];
         }
     };
