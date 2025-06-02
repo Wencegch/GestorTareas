@@ -6,7 +6,10 @@ function TaskForm() {
     const { id } = useParams();
     const navigate = useNavigate();
     const isEditMode = !!id;
-    const apiUrl = 'http://localhost/api/tasks';
+    // Asegúrate de que esta URL base sea correcta, puede ser 'http://localhost:8000/api/tasks'
+    // dependiendo de cómo tienes configurado el servidor de desarrollo de React y el de Laravel.
+    // Si tu Vite proxy está configurado para /api, entonces '/api/tasks' podría ser suficiente.
+    const apiUrl = 'http://localhost/api/tasks'; // Esta es la URL base para la colección de tareas
 
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -18,7 +21,8 @@ function TaskForm() {
     useEffect(() => {
         if (isEditMode) {
             setLoading(true);
-            apiClient.get(`<span class="math-inline">\{apiUrl\}/</span>{id}`) // Cambiado a apiClient.get [cite: 27, 32]
+            // CORRECCIÓN AQUÍ: Usar plantillas de cadena de JavaScript correctamente
+            apiClient.get(`${apiUrl}/${id}`) // <-- ¡CORREGIDO!
                 .then(response => {
                     const task = response.data;
                     setTitle(task.title);
@@ -38,7 +42,7 @@ function TaskForm() {
             setDueDate('');
             setStatus('pending');
         }
-    }, [id, isEditMode]);
+    }, [id, isEditMode, apiUrl]); // Agregamos 'apiUrl' a las dependencias por buena práctica
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -52,10 +56,11 @@ function TaskForm() {
         };
         try {
             if (isEditMode) {
-                await apiClient.put(`<span class="math-inline">\{apiUrl\}/</span>{id}`, taskData); // Cambiado a apiClient.put [cite: 27, 32]
+                // CORRECCIÓN AQUÍ: Usar plantillas de cadena de JavaScript correctamente
+                await apiClient.put(`${apiUrl}/${id}`, taskData); // <-- ¡CORREGIDO!
                 alert('Tarea actualizada con éxito!');
             } else {
-                await apiClient.post(apiUrl, taskData); // Cambiado a apiClient.post [cite: 27, 32]
+                await apiClient.post(apiUrl, taskData);
                 alert('Tarea creada con éxito!');
             }
             navigate('/');

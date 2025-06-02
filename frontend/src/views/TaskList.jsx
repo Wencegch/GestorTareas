@@ -23,18 +23,17 @@ function TaskList() {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
-            try {
-                await apiClient.delete(`<span class="math-inline">\{apiUrl\}/</span>{id}`); // Cambiado a apiClient.delete [cite: 27, 32]
-                setTasks(tasks.filter(task => task.id !== id));
-                console.log('Tarea eliminada con éxito');
-            } catch (err) {
-                console.error('Error al eliminar la tarea:', err);
-                alert(`Error al eliminar la tarea: ${err.response?.data?.message || err.message}`);
-                setError(err);
-            }
+    if (window.confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
+        try {
+            await apiClient.delete(`${apiUrl}/${id}`);
+            setTasks(tasks.filter(task => task.id !== id));
+            console.log('Tarea eliminada con éxito');
+        } catch (err) {
+            console.error('Error al eliminar la tarea:', err);
+            alert(`Error al eliminar la tarea: ${err.response?.data?.message || err.message}`);
         }
-    };
+    }
+};
 
     useEffect(() => {
         fetchTasks();
