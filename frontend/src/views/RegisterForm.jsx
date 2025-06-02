@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom'; // Importa Link
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 function RegisterForm() {
@@ -8,19 +8,19 @@ function RegisterForm() {
     const [password, setPassword] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
     const [error, setError] = useState(null);
-    const { register, login } = useAuth(); // También necesitas login para iniciar sesión después del registro
+    const { register, login } = useAuth(); 
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError(null); // Resetear errores
+        setError(null);
         if (password !== passwordConfirmation) {
             setError('Las contraseñas no coinciden.');
             return;
         }
         try {
             await register({ name, email, password, password_confirmation: passwordConfirmation });
-            // Opcional: Iniciar sesión automáticamente después del registro
+            // Iniciar sesión automáticamente después del registro
             await login({ email, password });
             navigate('/'); // Redirigir a la lista de tareas
         } catch (err) {
@@ -98,7 +98,7 @@ function RegisterForm() {
             </form>
 
             {/* Nuevo: Enlace para volver a Iniciar Sesión */}
-            <p className="text-center text-gray-400 text-sm mt-4"> {/* Añadido mt-4 para espacio */}
+            <p className="text-center text-gray-400 text-sm mt-4">
                 ¿Ya tienes cuenta? {' '}
                 <Link to="/login" className="text-blue-400 hover:text-blue-300 font-bold underline">
                     Iniciar Sesión

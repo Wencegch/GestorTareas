@@ -30,8 +30,7 @@ apiClient.interceptors.response.use(
         // Si el token es inválido o expirado (401 Unauthorized), puedes limpiar el token y redirigir.
         if (error.response && error.response.status === 401) {
             localStorage.removeItem('authToken');
-            // Aquí podrías, por ejemplo, redirigir al usuario a la página de login
-            // window.location.href = '/login';
+            window.location.href = '/login';
         }
         return Promise.reject(error);
     }

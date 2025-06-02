@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import apiClient from '../api'; // Asegúrate de que este es tu apiClient configurado
+import apiClient from '../api';
 
 const AuthContext = createContext();
 
@@ -8,12 +8,10 @@ export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(localStorage.getItem('authToken'));
     const [loading, setLoading] = useState(true);
 
-    // Efecto para inicializar el token en Axios cuando la aplicación carga
-    // o cuando el token cambia (ej. al cerrar sesión)
+    // Efecto para manejar el token al cargar el componente
     useEffect(() => {
         if (token) {
             // Establece el token en las cabeceras por defecto de Axios
-            // Esto asegura que fetchUser y cualquier otra petición use este token
             apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
             fetchUser();
         } else {
@@ -22,7 +20,7 @@ export const AuthProvider = ({ children }) => {
             setUser(null);
             setLoading(false);
         }
-    }, [token]); // Dependencia del token
+    }, [token]);
 
     const fetchUser = async () => {
         try {
@@ -46,12 +44,9 @@ export const AuthProvider = ({ children }) => {
             setToken(newToken); // Actualiza el estado del token
             localStorage.setItem('authToken', newToken); // Guarda en localStorage
 
-            // *** ESTO ES CLAVE PARA LA CONDICIÓN DE CARRERA ***
-            // Establece el token directamente en las cabeceras por defecto de Axios
-            // para que la siguiente llamada (fetchUser o a /tasks) lo use inmediatamente.
+            // Establece el token en las cabeceras de Axios para futuras peticiones
             apiClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
 
-            // La llamada a fetchUser() ahora debería usar el token recién establecido.
             await fetchUser();
             return true;
         } catch (error) {
@@ -96,7 +91,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+        <AuthContext.Provider value={{ user, token, loading, login, register, logout, fetchUser }}>
             {children}
         </AuthContext.Provider>
     );

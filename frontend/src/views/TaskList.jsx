@@ -12,7 +12,7 @@ function TaskList() {
         try {
             setLoading(true);
             setError(null);
-            const response = await apiClient.get(apiUrl); // Cambiado a apiClient.get [cite: 27, 32]
+            const response = await apiClient.get(apiUrl);
             setTasks(response.data);
         } catch (err) {
             console.error('Error al cargar las tareas:', err);
