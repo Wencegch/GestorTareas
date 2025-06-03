@@ -6,6 +6,7 @@ function UserProfileForm() {
     const { user, fetchUser } = useAuth();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [currentPassword, setCurrentPassword] = useState('');
     const [password, setPassword] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
     const [message, setMessage] = useState(null);
@@ -25,21 +26,27 @@ function UserProfileForm() {
 
         try {
             const data = { name, email };
+
+            // Si se ha proporcionado una nueva contraseña
             if (password) {
                 data.password = password;
                 data.password_confirmation = passwordConfirmation;
+                data.password_current = currentPassword;
             }
 
             const response = await apiClient.put('/user/profile', data);
 
             setMessage(response.data.message);
+            // Limpia los campos de contraseña después de un éxito
+            setCurrentPassword('');
             setPassword('');
             setPasswordConfirmation('');
-            await fetchUser();
+            await fetchUser(); // Vuelve a cargar los datos del usuario para asegurar que el AuthContext esté actualizado
 
         } catch (error) {
             if (error.response && error.response.status === 422) {
                 setErrors(error.response.data.errors);
+                // Si hay un error de contraseña actual, también se mostrará aquí
             } else {
                 setMessage('Error al actualizar el perfil: ' + (error.response?.data?.message || error.message));
             }
@@ -47,7 +54,7 @@ function UserProfileForm() {
     };
 
     return (
-        <div className="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-md">
+ <div className="bg-gray-800 p-8 rounded-lg shadow-xl mx-auto w-full max-w-md">
             <h2 className="text-3xl font-bold text-white mb-6 text-center">Mi Perfil</h2>
             <form onSubmit={handleSubmit}>
                 <div className="mb-4">
@@ -57,7 +64,7 @@ function UserProfileForm() {
                     <input
                         type="text"
                         id="name"
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
+                        className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         required
@@ -72,12 +79,26 @@ function UserProfileForm() {
                     <input
                         type="email"
                         id="email"
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
+                        className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
                     />
                     {errors.email && <p className="text-red-500 text-xs italic">{errors.email[0]}</p>}
+                </div>
+
+                <div className="mb-4">
+                    <label className="block text-gray-300 text-sm font-bold mb-2" htmlFor="current_password">
+                        Contraseña Actual:
+                    </label>
+                    <input
+                        type="password"
+                        id="current_password"
+                        className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                    />
+                    {errors.password_current && <p className="text-red-500 text-xs italic">{errors.password_current[0]}</p>}
                 </div>
 
                 <div className="mb-4">
@@ -87,7 +108,7 @@ function UserProfileForm() {
                     <input
                         type="password"
                         id="password"
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
+                        className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                     />
@@ -101,7 +122,7 @@ function UserProfileForm() {
                     <input
                         type="password"
                         id="password_confirmation"
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
+                        className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
                         value={passwordConfirmation}
                         onChange={(e) => setPasswordConfirmation(e.target.value)}
                     />
@@ -126,5 +147,4 @@ function UserProfileForm() {
     );
 }
 
-// THIS IS THE MISSING LINE!
 export default UserProfileForm;
