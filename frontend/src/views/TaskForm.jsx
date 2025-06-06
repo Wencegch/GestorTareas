@@ -6,10 +6,7 @@ function TaskForm() {
     const { id } = useParams();
     const navigate = useNavigate();
     const isEditMode = !!id;
-    // Asegúrate de que esta URL base sea correcta, puede ser 'http://localhost:8000/api/tasks'
-    // dependiendo de cómo tienes configurado el servidor de desarrollo de React y el de Laravel.
-    // Si tu Vite proxy está configurado para /api, entonces '/api/tasks' podría ser suficiente.
-    const apiUrl = 'http://localhost/api/tasks'; // Esta es la URL base para la colección de tareas
+    const apiUrl = 'http://localhost/api/tasks';
 
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -21,8 +18,7 @@ function TaskForm() {
     useEffect(() => {
         if (isEditMode) {
             setLoading(true);
-            // CORRECCIÓN AQUÍ: Usar plantillas de cadena de JavaScript correctamente
-            apiClient.get(`${apiUrl}/${id}`) // <-- ¡CORREGIDO!
+            apiClient.get(`${apiUrl}/${id}`)
                 .then(response => {
                     const task = response.data;
                     setTitle(task.title);
@@ -42,7 +38,7 @@ function TaskForm() {
             setDueDate('');
             setStatus('pending');
         }
-    }, [id, isEditMode, apiUrl]); // Agregamos 'apiUrl' a las dependencias por buena práctica
+    }, [id, isEditMode, apiUrl]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -56,8 +52,7 @@ function TaskForm() {
         };
         try {
             if (isEditMode) {
-                // CORRECCIÓN AQUÍ: Usar plantillas de cadena de JavaScript correctamente
-                await apiClient.put(`${apiUrl}/${id}`, taskData); // <-- ¡CORREGIDO!
+                await apiClient.put(`${apiUrl}/${id}`, taskData);
                 alert('Tarea actualizada con éxito!');
             } else {
                 await apiClient.post(apiUrl, taskData);
