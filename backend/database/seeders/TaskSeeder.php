@@ -27,7 +27,7 @@ class TaskSeeder extends Seeder
                 'title' => fake()->sentence(3), // Título de la tarea
                 'description' => fake()->paragraph(2), // Descripción
                 'due_date' => fake()->dateTimeBetween('+1 day', '+1 year')->format('Y-m-d'), // Fecha de vencimiento
-                'status' => fake()->randomElement(['pending', 'completed']), // Estado aleatorio
+                'completed' => fake()->boolean(),
                 'user_id' => fake()->randomElement($userIds), // Asignar a un usuario aleatorio
             ]);
         }
