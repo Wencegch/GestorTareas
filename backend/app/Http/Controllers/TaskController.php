@@ -4,93 +4,66 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; // Importa Auth para obtener el usuario autenticado
+use Illuminate\Support\Facades\Auth;
 
 class TaskController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function index(Request $request)
     {
-        // Obtener el usuario autenticado
         $user = Auth::user();
 
-        // Obtener solo las tareas del usuario actual
-        $tasks = $user->tasks(); // Esto devuelve un query builder, no una colección
+        // Obtener solo las tareas del usuario actual.
+        // Importante: $user->tasks() devuelve la relación, debes llamar a 'query()' en ella
+        // o usar Task::where('user_id', $user->id) directamente para empezar una consulta.
+        // La forma más directa es usar $user->tasks() como un Query Builder si ya lo tienes definido
+        // en el modelo User (ej. public function tasks() { return $this->hasMany(Task::class); }).
+        $query = $user->tasks(); // Esto ya es un Query Builder
 
-        // Aplicar filtro por título si se proporciona un parámetro 'search' en la URL
+        // Aplicar filtro por título
         if ($request->has('search')) {
             $searchTerm = $request->input('search');
-            $tasks->where('title', 'like', '%' . $searchTerm . '%');
+            $query->where('title', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('description', 'like', '%' . $searchTerm . '%'); // Opcional: buscar también en descripción
         }
 
-        // Aplicar filtro por estado 'completed' si se proporciona 'completed'
         if ($request->has('completed')) {
-            $completedFilter = $request->input('completed');
-            if ($completedFilter === '1' || $completedFilter === '0') { // Asegurarse de que es 0 o 1
-                $tasks->where('completed', (bool)$completedFilter);
-            }
-            // Podrías añadir un 'else if' para manejar valores como 'true'/'false' si los envías desde el frontend
+            $query->where('completed', $request->input('completed'));
         }
-        
-        // Ordenar las tareas (por ejemplo, por fecha de creación descendente)
-        $tasks->orderBy('created_at', 'desc');
+        // Si $request->has('completed') es falso, significa que el frontend no envió el parámetro,
+        // por lo que no se aplicará este filtro, y se devolverán todas las tareas
+        // (pendientes y completadas) para el usuario. Esto es perfecto para la opción 'all' del frontend.
 
-        // Obtener las tareas paginadas (opcional, pero buena práctica si tienes muchas tareas)
-        // return response()->json($tasks->paginate(10)); // Si quieres paginación
-        return response()->json($tasks->get()); // Si quieres todas las tareas filtradas
+        $query->orderBy('created_at', 'desc');
+
+        return response()->json($query->get());
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'due_date' => 'nullable|date', // 'nullable' si no es siempre requerido
             'completed' => 'boolean',
         ]);
 
         $task = new Task($request->all());
-        $task->user_id = Auth::id(); // Asigna la tarea al usuario autenticado
+        $task->user_id = Auth::id();
         $task->save();
 
         return response()->json($task, 201);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Task  $task
-     * @return \Illuminate\Http\Response
-     */
     public function show(Task $task)
     {
-        // Asegúrate de que solo el propietario de la tarea pueda verla
         if ($task->user_id !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
         return response()->json($task);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Task  $task
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, Task $task)
     {
-        // Asegúrate de que solo el propietario de la tarea pueda actualizarla
         if ($task->user_id !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
@@ -98,6 +71,7 @@ class TaskController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'due_date' => 'nullable|date',
             'completed' => 'boolean',
         ]);
 
@@ -105,15 +79,8 @@ class TaskController extends Controller
         return response()->json($task);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Task  $task
-     * @return \Illuminate\Http\Response
-     */
     public function destroy(Task $task)
     {
-        // Asegúrate de que solo el propietario de la tarea pueda eliminarla
         if ($task->user_id !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }

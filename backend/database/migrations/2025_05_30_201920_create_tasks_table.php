@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::create('tasks', function (Blueprint $table) {
             $table->id();
-            $table->string('title'); // Título de la tarea
-            $table->text('description')->nullable(); // Descripción, puede ser nula
-            $table->date('due_date')->nullable(); // Fecha de vencimiento
-            $table->enum('completed', ['pending', 'completed'])->default('pending'); // Estado de la tarea, por defecto 'pending'
+            $table->string('title');
+            $table->text('description')->nullable();
+            $table->date('due_date')->nullable();
+            $table->boolean('completed')->default(false);
+            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Añadir esta línea también
             $table->timestamps();
         });
     }
