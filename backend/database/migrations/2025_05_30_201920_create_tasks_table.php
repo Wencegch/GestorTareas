@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('title'); // Título de la tarea
             $table->text('description')->nullable(); // Descripción, puede ser nula
             $table->date('due_date')->nullable(); // Fecha de vencimiento
-            $table->enum('status', ['pending', 'completed'])->default('pending'); // Estado de la tarea, por defecto 'pending'
+            $table->enum('completed', ['pending', 'completed'])->default('pending'); // Estado de la tarea, por defecto 'pending'
             $table->timestamps();
         });
     }
