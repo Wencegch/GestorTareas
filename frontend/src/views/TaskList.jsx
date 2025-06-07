@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import apiClient from '../api';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 
 function TaskList() {
+    const { fetchTasks } = useOutletContext(); // Obtén fetchTasks desde el contexto
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterCompleted, setFilterCompleted] = useState('pending'); // Por defecto, mostrar pendientes
+    const [filterCompleted, setFilterCompleted] = useState('pending');
+    const [filterPriority, setFilterPriority] = useState('all'); // Estado para filtrar por prioridad
 
-    const fetchTasks = useCallback(async (search = '', completedFilter = 'pending') => {
+    const fetchLocalTasks = useCallback(async (search = '', completedFilter = 'pending', priorityFilter = 'all') => {
         setLoading(true);
         setError(null);
         try {
@@ -24,6 +26,10 @@ function TaskList() {
                 params.append('completed', '1');
             } else if (completedFilter === 'pending') {
                 params.append('completed', '0');
+            }
+
+            if (priorityFilter !== 'all') {
+                params.append('priority', priorityFilter);
             }
 
             if (params.toString()) {
@@ -41,20 +47,8 @@ function TaskList() {
     }, []);
 
     useEffect(() => {
-        fetchTasks(searchTerm, filterCompleted);
-    }, [fetchTasks, searchTerm, filterCompleted]);
-
-    const handleDelete = async (id) => {
-        if (window.confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
-            try {
-                await apiClient.delete(`/tasks/${id}`);
-                fetchTasks(searchTerm, filterCompleted);
-            } catch (err) {
-                console.error('Error al eliminar la tarea:', err);
-                setError('No se pudo eliminar la tarea.');
-            }
-        }
-    };
+        fetchLocalTasks(searchTerm, filterCompleted, filterPriority);
+    }, [fetchLocalTasks, searchTerm, filterCompleted, filterPriority]);
 
     const handleToggleCompleted = async (id) => {
         try {
@@ -70,22 +64,33 @@ function TaskList() {
                 title: taskToUpdate.title,
                 description: taskToUpdate.description,
                 completed: !taskToUpdate.completed,
+                priority: taskToUpdate.priority, // Mantener la prioridad al actualizar
             };
 
-            const response = await apiClient.put(`/tasks/${id}`, updateData);
-            console.log("Respuesta de toggle:", response.data);
-            fetchTasks(searchTerm, filterCompleted);
+            await apiClient.put(`/tasks/${id}`, updateData);
+            fetchLocalTasks(searchTerm, filterCompleted, filterPriority);
+            fetchTasks(); // Notifica a AuthenticatedLayout para actualizar los contadores
         } catch (err) {
             console.error('Error al cambiar el estado de la tarea:', err);
-            setError('No se pudo actualizar el estado de la tarea: ' + (err.response?.data?.message || err.message || 'Error desconocido'));
+            setError('No se pudo actualizar el estado de la tarea.');
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
+            try {
+                await apiClient.delete(`/tasks/${id}`); // Realiza la solicitud DELETE al backend
+                setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id)); // Actualiza el estado local eliminando la tarea
+                fetchTasks(); // Actualiza los contadores en AuthenticatedLayout
+            } catch (err) {
+                console.error('Error al eliminar la tarea:', err);
+                setError('No se pudo eliminar la tarea. Por favor, inténtalo de nuevo más tarde.');
+            }
         }
     };
 
     return (
-        // TaskList ahora solo renderiza el contenido de la columna central
-        // El diseño de las 3 columnas y la barra de navegación lateral
-        // se manejan en AuthenticatedLayout.jsx
-        <div className="w-full"> {/* Este div es solo para envolver el contenido de TaskList */}
+        <div className="w-full">
             <h3 className="text-2xl font-bold text-white mb-4">Mis Tareas</h3>
 
             <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-center">
@@ -98,7 +103,6 @@ function TaskList() {
                 />
             </div>
 
-            {/* Control de pestañas/botones */}
             <div className="flex justify-center mb-8 space-x-4 border-b border-gray-700 pb-2">
                 <button
                     onClick={() => setFilterCompleted('pending')}
@@ -122,7 +126,6 @@ function TaskList() {
                 </button>
             </div>
 
-            {/* Renderización condicional de la lista de tareas */}
             {loading ? (
                 <p className="text-center text-gray-400 text-lg">Cargando tareas...</p>
             ) : error ? (
@@ -133,8 +136,7 @@ function TaskList() {
                         ? 'No hay tareas que coincidan con la búsqueda en esta categoría.'
                         : (filterCompleted === 'pending'
                             ? '¡Genial! No tienes tareas pendientes. Añade una nueva tarea para empezar.'
-                            : 'No tienes tareas completadas aún. ¡Vamos a ello!')
-                    }
+                            : 'No tienes tareas completadas aún. ¡Vamos a ello!')}
                 </p>
             ) : (
                 <ul className="space-y-4">
@@ -150,6 +152,11 @@ function TaskList() {
                                 {task.due_date && (
                                     <p className="text-gray-400 text-sm mt-1">Vence: {new Date(task.due_date).toLocaleDateString('es-ES')}</p>
                                 )}
+                                <p className="text-gray-400 text-sm mt-1">Prioridad: 
+                                    <span className={`font-bold ${task.priority === 'high' ? 'text-red-500' : task.priority === 'medium' ? 'text-yellow-500' : 'text-green-500'}`}>
+                                        {task.priority}
+                                    </span>
+                                </p>
                             </div>
                             <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
                                 <button
