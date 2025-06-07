@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import apiClient from '../api';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 
 function TaskList() {
+    const { fetchTasks } = useOutletContext(); // Obtén fetchTasks desde el contexto
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterCompleted, setFilterCompleted] = useState('pending'); // Por defecto, mostrar pendientes
+    const [filterCompleted, setFilterCompleted] = useState('pending');
 
-    const fetchTasks = useCallback(async (search = '', completedFilter = 'pending') => {
+    const fetchLocalTasks = useCallback(async (search = '', completedFilter = 'pending') => {
         setLoading(true);
         setError(null);
         try {
@@ -41,20 +42,8 @@ function TaskList() {
     }, []);
 
     useEffect(() => {
-        fetchTasks(searchTerm, filterCompleted);
-    }, [fetchTasks, searchTerm, filterCompleted]);
-
-    const handleDelete = async (id) => {
-        if (window.confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
-            try {
-                await apiClient.delete(`/tasks/${id}`);
-                fetchTasks(searchTerm, filterCompleted);
-            } catch (err) {
-                console.error('Error al eliminar la tarea:', err);
-                setError('No se pudo eliminar la tarea.');
-            }
-        }
-    };
+        fetchLocalTasks(searchTerm, filterCompleted);
+    }, [fetchLocalTasks, searchTerm, filterCompleted]);
 
     const handleToggleCompleted = async (id) => {
         try {
@@ -72,12 +61,12 @@ function TaskList() {
                 completed: !taskToUpdate.completed,
             };
 
-            const response = await apiClient.put(`/tasks/${id}`, updateData);
-            console.log("Respuesta de toggle:", response.data);
-            fetchTasks(searchTerm, filterCompleted);
+            await apiClient.put(`/tasks/${id}`, updateData);
+            fetchLocalTasks(searchTerm, filterCompleted);
+            fetchTasks(); // Notifica a AuthenticatedLayout para actualizar los contadores
         } catch (err) {
             console.error('Error al cambiar el estado de la tarea:', err);
-            setError('No se pudo actualizar el estado de la tarea: ' + (err.response?.data?.message || err.message || 'Error desconocido'));
+            setError('No se pudo actualizar el estado de la tarea.');
         }
     };
 
