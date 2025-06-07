@@ -13,6 +13,7 @@ function TaskForm() {
     const [description, setDescription] = useState('');
     const [dueDate, setDueDate] = useState('');
     const [status, setStatus] = useState('pending');
+    const [priority, setPriority] = useState('medium'); // Estado para la prioridad
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -26,6 +27,7 @@ function TaskForm() {
                     setDescription(task.description || '');
                     setDueDate(task.due_date ? task.due_date.split('T')[0] : '');
                     setStatus(task.status);
+                    setPriority(task.priority || 'medium'); // Cargar prioridad
                     setLoading(false);
                 })
                 .catch(err => {
@@ -38,6 +40,7 @@ function TaskForm() {
             setDescription('');
             setDueDate('');
             setStatus('pending');
+            setPriority('medium'); // Prioridad predeterminada
         }
     }, [id, isEditMode, apiUrl]);
 
@@ -50,6 +53,7 @@ function TaskForm() {
             description,
             due_date: dueDate || null,
             status,
+            priority, // Incluir prioridad en los datos enviados
         };
 
         try {
@@ -105,6 +109,19 @@ function TaskForm() {
                     onChange={(e) => setDueDate(e.target.value)}
                     className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 placeholder-gray-400 text-white"
                 />
+            </div>
+            <div className="mb-4">
+                <label htmlFor="priority" className="block text-gray-400 text-sm font-bold mb-2">Prioridad:</label>
+                <select
+                    id="priority"
+                    value={priority}
+                    onChange={(e) => setPriority(e.target.value)}
+                    className="shadow border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
+                >
+                    <option value="low">Baja</option>
+                    <option value="medium">Media</option>
+                    <option value="high">Alta</option>
+                </select>
             </div>
             <div className="mb-6">
                 <label htmlFor="status" className="block text-gray-400 text-sm font-bold mb-2">Estado:</label>

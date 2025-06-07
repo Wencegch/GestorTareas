@@ -9,8 +9,9 @@ function TaskList() {
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCompleted, setFilterCompleted] = useState('pending');
+    const [filterPriority, setFilterPriority] = useState('all'); // Estado para filtrar por prioridad
 
-    const fetchLocalTasks = useCallback(async (search = '', completedFilter = 'pending') => {
+    const fetchLocalTasks = useCallback(async (search = '', completedFilter = 'pending', priorityFilter = 'all') => {
         setLoading(true);
         setError(null);
         try {
@@ -25,6 +26,10 @@ function TaskList() {
                 params.append('completed', '1');
             } else if (completedFilter === 'pending') {
                 params.append('completed', '0');
+            }
+
+            if (priorityFilter !== 'all') {
+                params.append('priority', priorityFilter);
             }
 
             if (params.toString()) {
@@ -42,8 +47,8 @@ function TaskList() {
     }, []);
 
     useEffect(() => {
-        fetchLocalTasks(searchTerm, filterCompleted);
-    }, [fetchLocalTasks, searchTerm, filterCompleted]);
+        fetchLocalTasks(searchTerm, filterCompleted, filterPriority);
+    }, [fetchLocalTasks, searchTerm, filterCompleted, filterPriority]);
 
     const handleToggleCompleted = async (id) => {
         try {
@@ -59,10 +64,11 @@ function TaskList() {
                 title: taskToUpdate.title,
                 description: taskToUpdate.description,
                 completed: !taskToUpdate.completed,
+                priority: taskToUpdate.priority, // Mantener la prioridad al actualizar
             };
 
             await apiClient.put(`/tasks/${id}`, updateData);
-            fetchLocalTasks(searchTerm, filterCompleted);
+            fetchLocalTasks(searchTerm, filterCompleted, filterPriority);
             fetchTasks(); // Notifica a AuthenticatedLayout para actualizar los contadores
         } catch (err) {
             console.error('Error al cambiar el estado de la tarea:', err);
@@ -84,10 +90,7 @@ function TaskList() {
     };
 
     return (
-        // TaskList ahora solo renderiza el contenido de la columna central
-        // El diseño de las 3 columnas y la barra de navegación lateral
-        // se manejan en AuthenticatedLayout.jsx
-        <div className="w-full"> {/* Este div es solo para envolver el contenido de TaskList */}
+        <div className="w-full">
             <h3 className="text-2xl font-bold text-white mb-4">Mis Tareas</h3>
 
             <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-center">
@@ -100,7 +103,6 @@ function TaskList() {
                 />
             </div>
 
-            {/* Control de pestañas/botones */}
             <div className="flex justify-center mb-8 space-x-4 border-b border-gray-700 pb-2">
                 <button
                     onClick={() => setFilterCompleted('pending')}
@@ -124,7 +126,6 @@ function TaskList() {
                 </button>
             </div>
 
-            {/* Renderización condicional de la lista de tareas */}
             {loading ? (
                 <p className="text-center text-gray-400 text-lg">Cargando tareas...</p>
             ) : error ? (
@@ -135,8 +136,7 @@ function TaskList() {
                         ? 'No hay tareas que coincidan con la búsqueda en esta categoría.'
                         : (filterCompleted === 'pending'
                             ? '¡Genial! No tienes tareas pendientes. Añade una nueva tarea para empezar.'
-                            : 'No tienes tareas completadas aún. ¡Vamos a ello!')
-                    }
+                            : 'No tienes tareas completadas aún. ¡Vamos a ello!')}
                 </p>
             ) : (
                 <ul className="space-y-4">
@@ -152,6 +152,11 @@ function TaskList() {
                                 {task.due_date && (
                                     <p className="text-gray-400 text-sm mt-1">Vence: {new Date(task.due_date).toLocaleDateString('es-ES')}</p>
                                 )}
+                                <p className="text-gray-400 text-sm mt-1">Prioridad: 
+                                    <span className={`font-bold ${task.priority === 'high' ? 'text-red-500' : task.priority === 'medium' ? 'text-yellow-500' : 'text-green-500'}`}>
+                                        {task.priority}
+                                    </span>
+                                </p>
                             </div>
                             <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
                                 <button
