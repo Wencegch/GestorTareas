@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import apiClient from '../api';
 
 function TaskForm() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { fetchTasks } = useOutletContext();
     const isEditMode = !!id;
     const apiUrl = 'http://localhost/api/tasks';
 
@@ -50,6 +51,7 @@ function TaskForm() {
             due_date: dueDate || null,
             status,
         };
+
         try {
             if (isEditMode) {
                 await apiClient.put(`${apiUrl}/${id}`, taskData);
@@ -57,6 +59,7 @@ function TaskForm() {
             } else {
                 await apiClient.post(apiUrl, taskData);
                 alert('Tarea creada con éxito!');
+                fetchTasks(); // Actualiza los contadores en AuthenticatedLayout
             }
             navigate('/');
         } catch (err) {

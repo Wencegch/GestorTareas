@@ -70,6 +70,19 @@ function TaskList() {
         }
     };
 
+    const handleDelete = async (id) => {
+        if (window.confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
+            try {
+                await apiClient.delete(`/tasks/${id}`); // Realiza la solicitud DELETE al backend
+                setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id)); // Actualiza el estado local eliminando la tarea
+                fetchTasks(); // Actualiza los contadores en AuthenticatedLayout
+            } catch (err) {
+                console.error('Error al eliminar la tarea:', err);
+                setError('No se pudo eliminar la tarea. Por favor, inténtalo de nuevo más tarde.');
+            }
+        }
+    };
+
     return (
         // TaskList ahora solo renderiza el contenido de la columna central
         // El diseño de las 3 columnas y la barra de navegación lateral
