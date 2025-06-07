@@ -12,7 +12,7 @@ function TaskForm() {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [dueDate, setDueDate] = useState('');
-    const [status, setStatus] = useState('pending');
+    const [completed, setCompleted] = useState(false);
     const [priority, setPriority] = useState('medium'); // Estado para la prioridad
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -26,7 +26,7 @@ function TaskForm() {
                     setTitle(task.title);
                     setDescription(task.description || '');
                     setDueDate(task.due_date ? task.due_date.split('T')[0] : '');
-                    setStatus(task.status);
+                    setCompleted(task.completed);
                     setPriority(task.priority || 'medium'); // Cargar prioridad
                     setLoading(false);
                 })
@@ -39,7 +39,7 @@ function TaskForm() {
             setTitle('');
             setDescription('');
             setDueDate('');
-            setStatus('pending');
+            setCompleted(false); // CORREGIDO: era setStatus('pending')
             setPriority('medium'); // Prioridad predeterminada
         }
     }, [id, isEditMode, apiUrl]);
@@ -52,7 +52,7 @@ function TaskForm() {
             title,
             description,
             due_date: dueDate || null,
-            status,
+            completed,
             priority, // Incluir prioridad en los datos enviados
         };
 
@@ -124,11 +124,11 @@ function TaskForm() {
                 </select>
             </div>
             <div className="mb-6">
-                <label htmlFor="status" className="block text-gray-400 text-sm font-bold mb-2">Estado:</label>
+                <label htmlFor="completed" className="block text-gray-400 text-sm font-bold mb-2">Estado:</label>
                 <select
-                    id="status"
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value)}
+                    id="completed"
+                    value={completed ? 'completed' : 'pending'}
+                    onChange={(e) => setCompleted(e.target.value === 'completed')} // CORREGIDO: convierte a booleano
                     className="shadow border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
                 >
                     <option value="pending">Pendiente</option>
