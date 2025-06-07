@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo; // Asegúrate de importar BelongsTo
 
 class Task extends Model
 {
@@ -16,30 +17,10 @@ class Task extends Model
      */
     protected $fillable = [
         'title',
-        'description' ,
+        'description',
         'due_date',   
-        'status',
+        'completed', // <--- ¡CAMBIADO DE 'status' A 'completed'!
         'user_id',
-        // Y cualquier otro campo que quieras permitir
-    ];
-
-    /**
-     * The user that owns the task.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User>
-     */
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
-    protected $hidden = [
-        //
     ];
 
     /**
@@ -48,6 +29,23 @@ class Task extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'due_date' => 'date',
+        'due_date' => 'datetime', // 'date' es correcto, 'datetime' también es común y más flexible
+        'completed' => 'boolean', // <--- ¡AÑADIDO ESTO!
     ];
+
+    /**
+     * The user that owns the task.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function user(): BelongsTo // Añade el tipo de retorno para mejor legibilidad
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    // `protected $hidden` generalmente no es necesario si solo ocultas la contraseña del usuario.
+    // Si no necesitas ocultar nada específico de la tarea, puedes quitarlo.
+    // protected $hidden = [
+    //     //
+    // ];
 }
