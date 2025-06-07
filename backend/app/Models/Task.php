@@ -20,6 +20,7 @@ class Task extends Model
         'description',
         'due_date',   
         'completed', // <--- ¡CAMBIADO DE 'status' A 'completed'!
+        'priority',
         'user_id',
     ];
 

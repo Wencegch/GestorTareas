@@ -41,6 +41,7 @@ class TaskController extends Controller
             'description' => 'nullable|string',
             'due_date' => 'nullable|date', // 'nullable' si no es siempre requerido
             'completed' => 'boolean',
+            'priority' => 'required|in:low,medium,high', // Validar prioridad
         ]);
 
         $task = new Task($request->all());
@@ -69,6 +70,7 @@ class TaskController extends Controller
             'description' => 'nullable|string',
             'due_date' => 'nullable|date',
             'completed' => 'boolean',
+            'priority' => 'required|in:low,medium,high', // Validar prioridad
         ]);
 
         $task->update($request->all());
