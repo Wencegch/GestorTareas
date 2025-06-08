@@ -89,6 +89,12 @@ function TaskList() {
         }
     };
 
+    // Ordenar las tareas por prioridad antes de renderizarlas
+    const sortedTasks = [...tasks].sort((a, b) => {
+        const priorityOrder = { high: 1, medium: 2, low: 3 };
+        return priorityOrder[a.priority] - priorityOrder[b.priority];
+    });
+
     return (
         <div className="w-full">
             <h3 className="text-2xl font-bold text-white mb-4">Mis Tareas</h3>
@@ -130,7 +136,7 @@ function TaskList() {
                 <p className="text-center text-gray-400 text-lg">Cargando tareas...</p>
             ) : error ? (
                 <p className="text-center text-red-500 text-lg">Error: {error}</p>
-            ) : tasks.length === 0 ? (
+            ) : sortedTasks.length === 0 ? (
                 <p className="text-center text-gray-400 text-lg">
                     {searchTerm
                         ? 'No hay tareas que coincidan con la búsqueda en esta categoría.'
@@ -140,7 +146,7 @@ function TaskList() {
                 </p>
             ) : (
                 <ul className="space-y-4">
-                    {tasks.map((task) => (
+                    {sortedTasks.map((task) => (
                         <li key={task.id} className={`bg-gray-900 p-6 rounded-lg shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center ${task.completed ? 'opacity-70' : ''}`}>
                             <div className="flex-1 mb-4 sm:mb-0 sm:mr-4">
                                 <h3 className={`text-xl font-semibold ${task.completed ? 'line-through text-gray-500' : 'text-blue-400'}`}>
