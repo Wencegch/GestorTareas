@@ -91,17 +91,9 @@ const AuthenticatedLayout = () => {
                         <Outlet context={{ fetchTasks }} />
                     </section>
 
-                    {/* Columna Derecha: Acciones Rápidas y Estadísticas */}
+                    {/* Columna Derecha: Estadísticas */}
                     <aside className="lg:col-span-1 bg-gray-800 p-6 rounded-lg shadow-xl h-fit sticky top-4">
-                        <h3 className="text-2xl font-semibold mb-4 text-white">Acciones Rápidas</h3>
-                        <Link
-                            to="/tasks/create"
-                            className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full text-lg shadow-lg transition duration-300 ease-in-out block text-center mb-6"
-                        >
-                            + Añadir Nueva Tarea
-                        </Link>
-
-                        <h3 className="text-2xl font-semibold mb-4 mt-8 text-white">Estadísticas</h3>
+                        <h3 className="text-2xl font-semibold mb-4 text-white">Estadísticas</h3>
                         {loading ? (
                             <p className="text-gray-300">Cargando estadísticas...</p>
                         ) : error ? (
